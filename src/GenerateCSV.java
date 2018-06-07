@@ -5,7 +5,7 @@ import java.io.PrintWriter;
 
 public class GenerateCSV {
 	
-	public static String outputFileName ="/Users/bhumi/Documents/Capstone/Testfiles/" + "opmetadata.txt";
+	public static String outputFileName ="/Users/bhumi/Documents/Capstone/Testfiles/" + "op.txt";
 	static String ErrorLog = "/Users/bhumi/Documents/Capstone/Testfiles/"+ "Err1.txt";
 	static StringBuffer tinObject = new StringBuffer();
 	static String firstString = "TIN Z(";

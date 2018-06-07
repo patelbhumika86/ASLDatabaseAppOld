@@ -26,6 +26,7 @@ public class UserInterface implements ActionListener {
 	JLabel labelCreateOutput;
 	JTextField textfieldFilePath;
 	JButton buttonSave;
+	JButton buttonDeleteObjects;
 
 	JLabel labelQueryLLB;
 	JLabel labelQueryURT;
@@ -131,69 +132,70 @@ public class UserInterface implements ActionListener {
 		JLabel lblNewLabel_1 = new JLabel("Store Objects into the Database");
 		lblNewLabel_1.setBounds(20, 6, 290, 16);
 		f.getContentPane().add(lblNewLabel_1);
+		
+		buttonDeleteObjects = new JButton("Delete Objects");
+		buttonDeleteObjects.setBounds(465, 88, 140, 40);
+		f.getContentPane().add(buttonDeleteObjects);
 		f.setVisible(true);
 		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		// action listener
 		buttonSave.addActionListener(this);
 		buttonFindIntersecting.addActionListener(this);
+		buttonDeleteObjects.addActionListener(this);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
+		String inputFilePath="";
 		if (e.getSource().equals(buttonSave)) {
-			String filePath = textfieldFilePath.getText();
-			if(filePath.isEmpty() || filePath.length()==0){
+			
+			inputFilePath = textfieldFilePath.getText();
+			if(inputFilePath.isEmpty() || inputFilePath.length()==0){
 				labelCreateOutput.setText("Please enter a file path for the input file");
 			}
 			else{
-				//				System.out.println(filePath);
-				Preporcessing obj = new Preporcessing();			
-				File file = new File(filePath);
-				BufferedReader br = null;
-				try {
-					br = new BufferedReader(new FileReader(file));
-				} catch (FileNotFoundException e1) {
-
-					labelCreateOutput.setText("Path or File not valid");
+				 try {
+					generateTempOPFile(inputFilePath);
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					System.err.println(e2.getMessage());
 				}
-
-				String st = new String();
-				StringBuffer metadata = new StringBuffer();
-				try {
-
-					while ((st = br.readLine()) != null) {
-						if (st.length() != 0 && st.charAt(0) == 'v') {
-							obj.storeCoordinates(st);
-						} else if (st.length() != 0 && st.charAt(0) == 'f') {
-							obj.mapVertexToCoord(st);
-						} else if (st.length() != 0 && st.charAt(0) == 'o') {
-							GenerateCSV.writeFile(metadata);
-							obj.coordinateList = new ArrayList<String>();
-							metadata = new StringBuffer();
-						}
-						metadata.append(st+"\\n");
-					}
-				} catch (IOException e1) {
-
-					labelCreateOutput.setText("Path or File not valid");
-
-				}
-				// write last record
-				GenerateCSV.writeFile(metadata);
-				GenerateCSV.addFileTermination("\\.");
-
 				try {
 					labelCreateOutput.setText("Copy Started");
 					WriteToDB.writeToTable();
 					//					labelCreateOutput.setText("Copy Started");
-					br.close();
+					
 				} catch (ClassNotFoundException | SQLException | IOException e1) {
 					labelCreateOutput.setText("Path or File not valid");
 				}
 				labelCreateOutput.setText("Copy Successful");
 			}
 		}
+		else if (e.getSource().equals(buttonDeleteObjects)) {
+			inputFilePath = textfieldFilePath.getText();
+			if(inputFilePath.isEmpty() || inputFilePath.length()==0){
+				labelCreateOutput.setText("Please enter a file path for the input file of objects to be deleted");
+			}
+			else{
+				 try {
+					generateTempOPFile(inputFilePath);
+				} catch (IOException e2) {
+					// TODO Auto-generated catch block
+					System.err.println(e2.getMessage());
+				}
+			}
+
+				try {
+					labelCreateOutput.setText("Finding objects to be deleted");
+					WriteToDB.deletefromTable();
+					labelCreateOutput.setText("obj deleted");
+				} catch (ClassNotFoundException | SQLException | IOException e1) {
+					labelCreateOutput.setText("Path or File not valid");
+				}
+				labelCreateOutput.setText("delete done");
+			}
+		
 		else if (e.getSource().equals(buttonFindIntersecting)) {
 			SpatialQuery q = new SpatialQuery();
 			PGbox3d inputbox = null;
@@ -222,6 +224,45 @@ public class UserInterface implements ActionListener {
 			}
 
 		}
+	}
+
+	private void generateTempOPFile(String filePath) throws IOException {
+		Preporcessing obj = new Preporcessing();			
+		File file = new File(filePath);
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(file));
+		} catch (FileNotFoundException e1) {
+
+			labelCreateOutput.setText("Path or File not valid");
+		}
+
+		String st = new String();
+		StringBuffer metadata = new StringBuffer();
+		try {
+
+			while ((st = br.readLine()) != null) {
+				if (st.length() != 0 && st.charAt(0) == 'v') {
+					obj.storeCoordinates(st);
+				} else if (st.length() != 0 && st.charAt(0) == 'f') {
+					obj.mapVertexToCoord(st);
+				} else if (st.length() != 0 && st.charAt(0) == 'o') {
+					GenerateCSV.writeFile(metadata);
+					obj.coordinateList = new ArrayList<String>();
+					metadata = new StringBuffer();
+				}
+				metadata.append(st+"\\n");
+			}
+		} catch (IOException e1) {
+
+			labelCreateOutput.setText("Path or File not valid");
+
+		}
+		// write last record
+		GenerateCSV.writeFile(metadata);
+		GenerateCSV.addFileTermination("\\.");
+		br.close();
+		return ;
 	}
 
 	public static void main(String[] args) {
